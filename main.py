@@ -12,7 +12,6 @@ ACCESS_KEY = os.environ.get("ACCESS_KEY", "1234")
 
 @app.before_request
 def check_access_key():
-    # Optional: protect all routes except these
     exempt_routes = ["get_kill_switch", "static"]
     if request.endpoint not in exempt_routes:
         key = request.args.get("key")
@@ -64,3 +63,7 @@ def get_kill_switch():
             except:
                 pass
     return jsonify({"enabled": False})
+
+# ✅ ENTRYPOINT — required by Railway
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
