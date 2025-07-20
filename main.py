@@ -8,7 +8,7 @@ app = Flask(__name__)
 # Read file paths from ENV (set in Railway > Shared Variables)
 LOG_FILE = os.environ.get("LOG_FILE", "logs.txt")
 KILL_FILE = os.environ.get("KILL_FILE", "killswitch.json")
-ACCESS_KEY = os.environ.get("ACCESS_KEY", "1234")
+ACCESS_KEY = os.environ.get("ACCESS_KEY", "2005")
 
 @app.before_request
 def check_access_key():
