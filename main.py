@@ -5,8 +5,19 @@ import os
 
 app = Flask(__name__)
 
-LOG_FILE = "logs.txt"
-KILL_FILE = "killswitch.json"
+# Read file paths from ENV (set in Railway > Shared Variables)
+LOG_FILE = os.environ.get("LOG_FILE", "logs.txt")
+KILL_FILE = os.environ.get("KILL_FILE", "killswitch.json")
+ACCESS_KEY = os.environ.get("ACCESS_KEY", "1234")
+
+@app.before_request
+def check_access_key():
+    # Optional: protect all routes except these
+    exempt_routes = ["get_kill_switch", "static"]
+    if request.endpoint not in exempt_routes:
+        key = request.args.get("key")
+        if key != ACCESS_KEY:
+            return jsonify({"error": "Unauthorized"}), 403
 
 @app.route("/")
 def panel():
@@ -19,11 +30,13 @@ def panel():
                 except:
                     pass
 
+    state = False
     if os.path.exists(KILL_FILE):
         with open(KILL_FILE) as f:
-            state = json.load(f).get("enabled", False)
-    else:
-        state = False
+            try:
+                state = json.load(f).get("enabled", False)
+            except:
+                pass
 
     return render_template("index.html", logs=logs, kill_switch=state)
 
@@ -32,7 +45,7 @@ def toggle():
     enabled = request.form.get("enabled") == "on"
     with open(KILL_FILE, "w") as f:
         json.dump({"enabled": enabled}, f)
-    return redirect("/")
+    return redirect(f"/?key={ACCESS_KEY}")
 
 @app.route("/log", methods=["POST"])
 def log():
@@ -46,5 +59,8 @@ def log():
 def get_kill_switch():
     if os.path.exists(KILL_FILE):
         with open(KILL_FILE) as f:
-            return jsonify(json.load(f))
+            try:
+                return jsonify(json.load(f))
+            except:
+                pass
     return jsonify({"enabled": False})
